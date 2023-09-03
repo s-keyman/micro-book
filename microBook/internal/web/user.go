@@ -1,6 +1,8 @@
 package web
 
 import (
+	"micro-book/microBook/internal/domain"
+	"micro-book/microBook/internal/service"
 	"net/http"
 
 	"github.com/dlclark/regexp2"
@@ -15,6 +17,7 @@ const (
 
 // UserHandler 定义所有跟用户有关的路由
 type UserHandler struct {
+	svc *service.UserService
 	//预编译正则表达式，不用每次使用前都编译一次
 	emailRegeExp    *regexp2.Regexp
 	passwordRegeExp *regexp2.Regexp
@@ -34,8 +37,9 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.GET("/profile", u.Profile)
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{
+		svc:             svc,
 		emailRegeExp:    regexp2.MustCompile(emailRegexPattern, regexp2.None),
 		passwordRegeExp: regexp2.MustCompile(passwordRegexPattern, regexp2.None),
 	}
@@ -80,8 +84,18 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "输入的邮箱格式不对！")
 		return
 	}
+
+	// 调用一下 service 的方法
+	err = u.svc.SignUp(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, "系统异常！")
+		return
+	}
+
 	ctx.String(http.StatusOK, "注册成功！")
-	//下面是数据库操作
 }
 func (u *UserHandler) Login(ctx *gin.Context)   {}
 func (u *UserHandler) Edit(ctx *gin.Context)    {}
