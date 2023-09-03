@@ -1,8 +1,8 @@
 package web
 
 import (
-	"micro-book/microBook/internal/domain"
-	"micro-book/microBook/internal/service"
+	"microBook/internal/domain"
+	"microBook/internal/service"
 	"net/http"
 
 	"github.com/dlclark/regexp2"
