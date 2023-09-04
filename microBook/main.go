@@ -1,9 +1,6 @@
 package main
 
 import (
-	"microBook/internal/repository"
-	"microBook/internal/repository/dao"
-	"microBook/internal/service"
 	"strings"
 	"time"
 
@@ -12,6 +9,9 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
+	"microBook/internal/repository"
+	"microBook/internal/repository/dao"
+	"microBook/internal/service"
 	"microBook/internal/web"
 )
 
@@ -55,7 +55,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316/microBook"))
+	db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:13316)/microBook"))
 	if err != nil {
 		panic(err)
 	}

@@ -81,7 +81,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 	if !ok {
-		ctx.String(http.StatusOK, "输入的邮箱格式不对！")
+		ctx.String(http.StatusOK, "密码必须大于8位，包含字母、数字、特殊字符")
 		return
 	}
 
