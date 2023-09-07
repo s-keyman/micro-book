@@ -32,3 +32,7 @@ func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
 	//然后存起来
 	return svc.repo.Create(ctx, u)
 }
+func (svc *UserService) Login(ctx context.Context, email string, password string) error {
+	err := svc.repo.FindByEmail(ctx, email)
+	return nil
+}

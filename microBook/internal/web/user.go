@@ -108,10 +108,17 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 }
 func (u *UserHandler) Login(ctx *gin.Context) {
 	//1.登录本身
-	type Login struct {
+	type LoginReq struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+	var req LoginReq
+	// Bind 方法会根据 Content-Type 来解析数据
+	// 解析错误，直接写回一个 4xx 错误
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	u, err := u.svc.Login(ctx, req.Email, req.Password)
 	//2.登录态的校验
 }
 func (u *UserHandler) Edit(ctx *gin.Context)    {}
