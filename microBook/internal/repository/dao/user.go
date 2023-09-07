@@ -2,9 +2,15 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
+)
+
+var (
+	ErrUserDuplicateEmail = errors.New("邮箱冲突")
 )
 
 type UserDAO struct {
@@ -12,7 +18,7 @@ type UserDAO struct {
 }
 
 type User struct {
-	Id uint64
+	Id uint64 `gorm:"primaryKey,autoIncrement"`
 	// 设置为唯一索引
 	Email    string `gorm:"unique"`
 	Password string
@@ -31,5 +37,13 @@ func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
 	u.Ctime = now
 	u.Utime = now
-	return dao.db.WithContext(ctx).Create(&u).Error
+	err := dao.db.WithContext(ctx).Create(&u).Error
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
+		const uniqueConflictsErrNo uint16 = 1062
+		if mysqlErr.Number == uniqueConflictsErrNo {
+			return ErrUserDuplicateEmail
+		}
+	}
+	return err
 }

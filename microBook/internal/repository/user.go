@@ -6,6 +6,10 @@ import (
 	"microBook/internal/repository/dao"
 )
 
+var (
+	ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+)
+
 type UserRepository struct {
 	dao *dao.UserDAO
 }

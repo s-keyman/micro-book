@@ -1,12 +1,17 @@
 package web
 
 import (
+	"errors"
 	"microBook/internal/domain"
 	"microBook/internal/service"
 	"net/http"
 
 	"github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	ErrUserDuplicate = service.ErrDuplicateEmail
 )
 
 const (
@@ -90,6 +95,10 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Email:    req.Email,
 		Password: req.Password,
 	})
+	if errors.Is(err, ErrUserDuplicate) {
+		ctx.String(http.StatusOK, "邮箱冲突！")
+		return
+	}
 	if err != nil {
 		ctx.String(http.StatusOK, "系统异常！")
 		return
@@ -97,6 +106,13 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 
 	ctx.String(http.StatusOK, "注册成功！")
 }
-func (u *UserHandler) Login(ctx *gin.Context)   {}
+func (u *UserHandler) Login(ctx *gin.Context) {
+	//1.登录本身
+	type Login struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	//2.登录态的校验
+}
 func (u *UserHandler) Edit(ctx *gin.Context)    {}
 func (u *UserHandler) Profile(ctx *gin.Context) {}
