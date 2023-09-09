@@ -23,7 +23,10 @@ func main() {
 	server := initWebServer()
 	u := initUser(db)
 	u.RegisterRoutes(server)
-	server.Run(":8080")
+	err := server.Run(":8080")
+	if err != nil {
+		panic("系统故障")
+	}
 }
 
 func initWebServer() *gin.Engine {
