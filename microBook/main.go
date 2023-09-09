@@ -1,6 +1,7 @@
 package main
 
 import (
+	"microBook/internal/web/middleware"
 	"strings"
 	"time"
 
@@ -45,8 +46,23 @@ func initWebServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Second,
 	}))
+
 	store := cookie.NewStore([]byte("secret"))
 	server.Use(sessions.Sessions("mysid", store))
+	// 校验步骤
+	server.Use(middleware.NewLoginMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())
+
+	// v1
+	//middleware.IgnorePaths = []string{"sss"}
+	//server.Use(middleware.CheckLogin())
+	////middleware.IgnorePaths = []string{"sss"}
+	////server.Use(middleware.CheckLogin())
+	//
+	//// 不能忽略sss这条路径
+	//server1 := gin.Default()
+	//server1.Use(middleware.CheckLogin())
+	////server1 := gin.Default()
+	////server1.Use(middleware.CheckLogin())
 	return server
 }
 
