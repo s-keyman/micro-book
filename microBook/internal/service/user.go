@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"microBook/internal/domain"
 	"microBook/internal/repository"
 
@@ -9,7 +10,8 @@ import (
 )
 
 var (
-	ErrDuplicateEmail = repository.ErrUserDuplicateEmail
+	ErrDuplicateEmail        = repository.ErrUserDuplicateEmail
+	ErrInvalidUserOrPassword = errors.New("邮箱/密码不对")
 )
 
 type UserService struct {
@@ -32,7 +34,20 @@ func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
 	//然后存起来
 	return svc.repo.Create(ctx, u)
 }
-func (svc *UserService) Login(ctx context.Context, email string, password string) error {
-	err := svc.repo.FindByEmail(ctx, email)
-	return nil
+func (svc *UserService) Login(ctx context.Context, email string, password string) (domain.User, error) {
+	//先找用户
+	u, err := svc.repo.FindByEmail(ctx, email)
+	if errors.Is(err, repository.ErrUserNotFound) {
+		return domain.User{}, ErrInvalidUserOrPassword
+	}
+	if err != nil {
+		return domain.User{}, err
+	}
+	//比较密码
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if err != nil {
+		//这里可以打日志
+		return domain.User{}, ErrInvalidUserOrPassword
+	}
+	return u, nil
 }

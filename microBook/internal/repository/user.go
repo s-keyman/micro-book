@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+	ErrUserNotFound       = dao.ErrUserNotFound
 )
 
 type UserRepository struct {
@@ -27,8 +28,11 @@ func (r *UserRepository) Create(ctx context.Context, user domain.User) error {
 }
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	u, err := r.dao.FindByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
 	return domain.User{
 		Id:       u.Id,
 		Email:    u.Email,
-		Password: u.Password}, err
+		Password: u.Password}, nil
 }

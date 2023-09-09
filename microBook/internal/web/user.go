@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -118,7 +119,28 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	u, err := u.svc.Login(ctx, req.Email, req.Password)
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	if errors.Is(err, service.ErrInvalidUserOrPassword) {
+		ctx.String(http.StatusOK, "用户名或密码不对")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误！")
+		return
+	}
+	// 步骤2
+	// 在这里登录成功了
+	// 设置 session
+	ssid := sessions.Default(ctx)
+	// 我可以随便设置值了
+	// 你要放在 session 里面的值
+	ssid.Set("userId", user.Id)
+	err = ssid.Save()
+	if err != nil {
+		return
+	}
+	ctx.String(http.StatusOK, "登录成功")
+	return
 	//2.登录态的校验
 }
 func (u *UserHandler) Edit(ctx *gin.Context)    {}
