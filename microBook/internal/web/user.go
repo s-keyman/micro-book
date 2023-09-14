@@ -140,8 +140,8 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	ssid.Set("userId", user.Id)
 	ssid.Options(
 		sessions.Options{
-			// 60 秒过期
-			MaxAge: 60,
+			//设置过期时间
+			MaxAge: 1800,
 		},
 	)
 	err = ssid.Save()
