@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -31,26 +31,43 @@ func main() {
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
-	server.Use(cors.New(cors.Config{
-		//允许的单个路由（建议用 AllowOriginFunc ）
-		//AllowOrigins:     []string{"https://foo.com"},
-		//不填 AllowMethods 代表允许所有方法（ post put get 等，详见文档）
-		AllowMethods: []string{"PUT", "POST", "GET", "OPTIONS"},
-		AllowHeaders: []string{"Content-Type", "Authorization"},
-		//是否允许带 cookie 之类的东西
-		//ExposeHeaders:    []string{"x-jwt-token"},
-		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			if strings.HasPrefix(origin, "http://localhost") {
-				//开发环境
-				return true
-			}
-			return origin == "https://github.com"
-		},
-		MaxAge: 12 * time.Second,
-	}))
+	server.Use(
+		cors.New(
+			cors.Config{
+				//允许的单个路由（建议用 AllowOriginFunc ）
+				//AllowOrigins:     []string{"https://foo.com"},
+				//不填 AllowMethods 代表允许所有方法（ post put get 等，详见文档）
+				AllowMethods: []string{"PUT", "POST", "GET", "OPTIONS"},
+				AllowHeaders: []string{"Content-Type", "Authorization"},
+				//是否允许带 cookie 之类的东西
+				//ExposeHeaders:    []string{"x-jwt-token"},
+				AllowCredentials: true,
+				AllowOriginFunc: func(origin string) bool {
+					if strings.HasPrefix(origin, "http://localhost") {
+						//开发环境
+						return true
+					}
+					return origin == "https://github.com"
+				},
+				MaxAge: 12 * time.Second,
+			},
+		),
+	)
 
-	store := cookie.NewStore([]byte("secret"))
+	// 步骤1
+	//store := cookie.NewStore([]byte("secret"))
+	//store := cookie.NewStore([]byte("secret"))
+	//使用 memstore 存储 session
+	//store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+	// 使用 redis 存储 session
+	store, err := redis.NewStore(
+		16, "tcp", "localhost", "",
+		[]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"), []byte("QvcBUP5f[DTp!u>4G%x?atz@1d/}!DS^"),
+	)
+	if err != nil {
+		panic(err)
+	}
 	server.Use(sessions.Sessions("mysid", store))
 	// 校验步骤
 	server.Use(middleware.NewLoginMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())

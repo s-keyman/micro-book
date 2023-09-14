@@ -93,10 +93,12 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	// 调用一下 service 的方法
-	err = u.svc.SignUp(ctx, domain.User{
-		Email:    req.Email,
-		Password: req.Password,
-	})
+	err = u.svc.SignUp(
+		ctx, domain.User{
+			Email:    req.Email,
+			Password: req.Password,
+		},
+	)
 	if errors.Is(err, ErrUserDuplicate) {
 		ctx.String(http.StatusOK, "邮箱冲突！")
 		return
@@ -136,6 +138,12 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	// 我可以随便设置值了
 	// 你要放在 session 里面的值
 	ssid.Set("userId", user.Id)
+	ssid.Options(
+		sessions.Options{
+			// 60 秒过期
+			MaxAge: 60,
+		},
+	)
 	err = ssid.Save()
 	if err != nil {
 		return
@@ -188,10 +196,12 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
-		Nickname: req.Nickname,
-		AboutMe:  req.AboutMe,
-		Birthday: birthday})
+	err = u.svc.UpdateNonSensitiveInfo(
+		ctx, domain.User{
+			Nickname: req.Nickname,
+			AboutMe:  req.AboutMe,
+			Birthday: birthday},
+	)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
