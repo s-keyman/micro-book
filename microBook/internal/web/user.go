@@ -5,6 +5,7 @@ import (
 	"microBook/internal/domain"
 	"microBook/internal/service"
 	"net/http"
+	"time"
 
 	"github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
@@ -141,7 +142,80 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	}
 	ctx.String(http.StatusOK, "登录成功")
 	return
-	//2.登录态的校验
+
 }
-func (u *UserHandler) Edit(ctx *gin.Context)    {}
-func (u *UserHandler) Profile(ctx *gin.Context) {}
+
+// Edit 用户编译信息
+func (u *UserHandler) Edit(ctx *gin.Context) {
+	type EditReq struct {
+		// 注意，其它字段，尤其是密码、邮箱和手机，
+		// 修改都要通过别的手段
+		// 邮箱和手机都要验证
+		// 密码更加不用多说了
+		Nickname string `json:"nickname"`
+		// 2023-01-01
+		Birthday string `json:"birthday"`
+		AboutMe  string `json:"aboutMe"`
+	}
+
+	var req EditReq
+	// Bind 方法会根据 Content-Type 来解析数据
+	// 解析错误，直接写回一个 4xx 错误
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	// 你可以尝试在这里校验。
+	// 比如说你可以要求 Nickname 必须不为空
+	// 校验规则取决于产品经理
+	if req.Nickname == "" {
+		ctx.String(http.StatusOK, "昵称不能为空")
+		return
+	}
+
+	// 限制个人简介的长度
+	if len(req.AboutMe) > 1024 {
+		ctx.String(http.StatusOK, "个人简介不能超过1024个字符！")
+		return
+	}
+
+	//日期转换
+	birthday, err := time.Parse(time.DateTime, req.Birthday)
+	if err != nil {
+		// 也就是说，我们其实并没有直接校验具体的格式
+		// 而是如果你能转化过来，那就说明没问题
+		ctx.String(http.StatusOK, "日期格式不对")
+		return
+	}
+
+	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
+		Nickname: req.Nickname,
+		AboutMe:  req.AboutMe,
+		Birthday: birthday})
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	ctx.String(http.StatusOK, "OK")
+	return
+}
+
+// Profile 用户详情
+func (u *UserHandler) Profile(ctx *gin.Context) {
+	type ProfileReq struct {
+		Email    string
+		Phone    string
+		Nickname string
+		Birthday string
+		AboutMe  string
+	}
+
+	var req ProfileReq
+	// Bind 方法会根据 Content-Type 来解析数据
+	// 解析错误，直接写回一个 4xx 错误
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	ctx.String(http.StatusOK, "成功")
+	return
+}
