@@ -39,8 +39,8 @@ func initWebServer() *gin.Engine {
 				//不填 AllowMethods 代表允许所有方法（ post put get 等，详见文档）
 				AllowMethods: []string{"PUT", "POST", "GET", "OPTIONS"},
 				AllowHeaders: []string{"Content-Type", "Authorization"},
-				//是否允许带 cookie 之类的东西
-				//ExposeHeaders:    []string{"x-jwt-token"},
+				//是否允许带 cookie 之类的东西，不加前端拿不到 token
+				ExposeHeaders:    []string{"x-jwt-token"},
 				AllowCredentials: true,
 				AllowOriginFunc: func(origin string) bool {
 					if strings.HasPrefix(origin, "http://localhost") {
@@ -70,8 +70,9 @@ func initWebServer() *gin.Engine {
 	}
 	server.Use(sessions.Sessions("mysid", store))
 	// 校验步骤
-	server.Use(middleware.NewLoginMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())
-
+	//server.Use(middleware.NewLoginMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())
+	// 使用 jwt
+	server.Use(middleware.NewLoginJWTMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())
 	// v1
 	//middleware.IgnorePaths = []string{"sss"}
 	//server.Use(middleware.CheckLogin())

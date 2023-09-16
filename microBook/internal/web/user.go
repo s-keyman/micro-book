@@ -5,11 +5,13 @@ import (
 	"microBook/internal/domain"
 	"microBook/internal/service"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -39,7 +41,8 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	//使用分组功能
 	ug := server.Group("/users")
 	ug.POST("/signup", u.SignUp)
-	ug.POST("/login", u.Login)
+	//ug.POST("/login", u.Login)
+	ug.POST("/login", u.LoginJWT)
 	ug.POST("/edit", u.Edit)
 	ug.GET("/profile", u.Profile)
 }
@@ -141,7 +144,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	ssid.Options(
 		sessions.Options{
 			//设置过期时间
-			MaxAge: 1800,
+			MaxAge: 60,
 		},
 	)
 	err = ssid.Save()
@@ -150,7 +153,44 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	}
 	ctx.String(http.StatusOK, "登录成功")
 	return
+}
 
+// LoginJWT jwt登录
+func (u *UserHandler) LoginJWT(ctx *gin.Context) {
+	type jwtReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req jwtReq
+	// Bind 方法会根据 Content-Type 来解析数据
+	// 解析错误，直接写回一个 4xx 错误
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	if errors.Is(err, service.ErrInvalidUserOrPassword) {
+		ctx.String(http.StatusOK, "用户名或密码不对")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误！")
+		return
+	}
+
+	//步骤2 jwt 设置登录态
+	//生成一个 JWT token
+	token := jwt.New(jwt.SigningMethodHS512)
+	tokenString, err := token.SignedString([]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"))
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误！")
+		return
+	}
+	ctx.Header("x-jwt-token", tokenString)
+
+	ctx.String(http.StatusOK, strconv.FormatUint(user.Id, 10)+"\n")
+
+	ctx.String(http.StatusOK, "登录成功")
 }
 
 // Edit 用户编译信息
