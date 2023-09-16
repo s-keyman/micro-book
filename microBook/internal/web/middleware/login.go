@@ -49,24 +49,22 @@ func (l *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 		sess.Options(
 			sessions.Options{
 				// 60 秒过期
-				MaxAge: 1800,
+				MaxAge: 60,
 			},
 		)
-		now := time.Now().UnixMilli()
+		now := time.Now()
 		// 说明还没有刷新过，刚登陆，还没刷新过
 		if updateTime == nil {
 			sess.Set("update_time", now)
-			err := sess.Save()
-			if err != nil {
+			if err := sess.Save(); err != nil {
 				panic(err)
 			}
 		}
-		// updateTime 是有的，证明登录已经超过 1 分钟，需要刷新 session
-		updateTimeVal, _ := updateTime.(int64)
-		if now-updateTimeVal > 60000 {
+		// updateTime 是有的
+		updateTimeVal, _ := updateTime.(time.Time)
+		if now.Sub(updateTimeVal) > time.Second*10 {
 			sess.Set("update_time", now)
-			err := sess.Save()
-			if err != nil {
+			if err := sess.Save(); err != nil {
 				panic(err)
 			}
 		}

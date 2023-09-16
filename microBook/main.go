@@ -62,7 +62,7 @@ func initWebServer() *gin.Engine {
 	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
 	// 使用 redis 存储 session
 	store, err := redis.NewStore(
-		16, "tcp", "localhost", "",
+		16, "tcp", "localhost:6379", "",
 		[]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"), []byte("QvcBUP5f[DTp!u>4G%x?atz@1d/}!DS^"),
 	)
 	if err != nil {
