@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"microBook/internal/web"
 	"net/http"
 	"strings"
 
@@ -48,8 +49,11 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		tokenStr := segs[1]
-		token, err := jwt.Parse(
-			tokenStr, func(token *jwt.Token) (interface{}, error) {
+		claims := &web.UserClaims{}
+		// ParseWithClaims 里面一定要传指针
+		token, err := jwt.ParseWithClaims(
+			tokenStr, claims,
+			func(token *jwt.Token) (interface{}, error) {
 				return []byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"), nil
 			},
 		)
@@ -57,9 +61,10 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if token == nil || !token.Valid {
+		if token == nil || !token.Valid || claims.Uid == 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+		ctx.Set("claims", claims)
 	}
 }

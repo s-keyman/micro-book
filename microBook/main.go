@@ -43,11 +43,11 @@ func initWebServer() *gin.Engine {
 				ExposeHeaders:    []string{"x-jwt-token"},
 				AllowCredentials: true,
 				AllowOriginFunc: func(origin string) bool {
-					if strings.HasPrefix(origin, "http://localhost") {
+					if strings.HasPrefix(origin, "http://192.168.31.37") {
 						//开发环境
 						return true
 					}
-					return origin == "https://github.com"
+					return origin == "http://locolhost"
 				},
 				MaxAge: 12 * time.Second,
 			},

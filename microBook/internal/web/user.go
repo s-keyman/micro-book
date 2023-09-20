@@ -32,6 +32,11 @@ type UserHandler struct {
 	passwordRegeExp *regexp2.Regexp
 }
 
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Uid uint64
+}
+
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	//注册路由
 	//sever.POST("/users/signup", u.SignUp)
@@ -44,7 +49,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	//ug.POST("/login", u.Login)
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/edit", u.Edit)
-	ug.GET("/profile", u.Profile)
+	ug.GET("/profile", u.ProfileJWT)
 }
 
 func NewUserHandler(svc *service.UserService) *UserHandler {
@@ -180,7 +185,11 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 
 	//步骤2 jwt 设置登录态
 	//生成一个 JWT token
-	token := jwt.New(jwt.SigningMethodHS512)
+	claims := UserClaims{
+		Uid: user.Id,
+	}
+	// claims 要用指针
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenString, err := token.SignedString([]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"))
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误！")
@@ -247,6 +256,39 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 		return
 	}
 	ctx.String(http.StatusOK, "OK")
+	return
+}
+
+// ProfileJWT 用户详情
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	type ProfileReq struct {
+		Email    string
+		Phone    string
+		Nickname string
+		Birthday string
+		AboutMe  string
+	}
+
+	var req ProfileReq
+	// Bind 方法会根据 Content-Type 来解析数据
+	// 解析错误，直接写回一个 4xx 错误
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	// 可以断定，必然有 claims
+	c, _ := ctx.Get("claims")
+	//if !ok {
+	//	ctx.String(http.StatusOK, "系统错误")
+	//	return
+	//}
+	// ok 代表是不是 UserClaims
+	claims, ok := c.(*UserClaims)
+	if !ok {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	println(claims.Uid)
+	ctx.String(http.StatusOK, "成功")
 	return
 }
 
