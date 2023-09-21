@@ -67,6 +67,12 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+		if claims.UserAgent != ctx.Request.UserAgent() {
+			// 严重的安全问题
+			// 你是要监控
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 		// 每 10 秒续约一次，生成了一个新的token
 		now := time.Now()
 		if claims.ExpiresAt.Sub(now) < time.Second*50 {

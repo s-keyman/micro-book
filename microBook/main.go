@@ -2,13 +2,15 @@ package main
 
 import (
 	"microBook/internal/web/middleware"
+	"microBook/pkg/ginx/middleware/ratelimit"
 	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -31,6 +33,15 @@ func main() {
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "", // no password set
+			DB:       0,  // use default DB
+		},
+	)
+	// 基于滑动窗口算法的，利用redis进行IP限流
+	server.Use(ratelimit.NewBuilder(redisClient, time.Minute, 100).Build())
 	server.Use(
 		cors.New(
 			cors.Config{
@@ -58,16 +69,18 @@ func initWebServer() *gin.Engine {
 	//store := cookie.NewStore([]byte("secret"))
 	//store := cookie.NewStore([]byte("secret"))
 	//使用 memstore 存储 session
-	//store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
-	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
-	// 使用 redis 存储 session
-	store, err := redis.NewStore(
-		16, "tcp", "localhost:6379", "",
-		[]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"), []byte("QvcBUP5f[DTp!u>4G%x?atz@1d/}!DS^"),
+	store := memstore.NewStore(
+		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	// 使用 redis 存储 session
+	//store, err := redis.NewStore(
+	//	16, "tcp", "localhost:6379", "",
+	//	[]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"), []byte("QvcBUP5f[DTp!u>4G%x?atz@1d/}!DS^"),
+	//)
+	//if err != nil {
+	//	panic(err)
+	//}
 	server.Use(sessions.Sessions("mysid", store))
 	// 校验步骤
 	//server.Use(middleware.NewLoginMiddleWare().IgnorePaths([]string{"/users/login", "/users/signup"}).Build())

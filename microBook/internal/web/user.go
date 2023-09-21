@@ -34,7 +34,8 @@ type UserHandler struct {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Uid uint64
+	Uid       uint64
+	UserAgent string
 }
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
@@ -189,7 +190,8 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 		},
-		Uid: user.Id,
+		Uid:       user.Id,
+		UserAgent: ctx.Request.UserAgent(),
 	}
 	// claims 要用指针
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
