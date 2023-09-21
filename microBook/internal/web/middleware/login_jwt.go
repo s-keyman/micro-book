@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"log"
 	"microBook/internal/web"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -64,6 +66,17 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 		if token == nil || !token.Valid || claims.Uid == 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
+		}
+		// 每 10 秒续约一次，生成了一个新的token
+		now := time.Now()
+		if claims.ExpiresAt.Sub(now) < time.Second*50 {
+			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute))
+			tokenString, err := token.SignedString([]byte("eW*ZAxyp1Lx81hp9:swB?Sp)l$We8qeI"))
+			if err != nil {
+				// 记录日志
+				log.Println("jwt 续约失败", err)
+			}
+			ctx.Header("x-jwt-token", tokenString)
 		}
 		ctx.Set("claims", claims)
 	}

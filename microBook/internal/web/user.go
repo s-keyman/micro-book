@@ -186,6 +186,9 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	//步骤2 jwt 设置登录态
 	//生成一个 JWT token
 	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
 		Uid: user.Id,
 	}
 	// claims 要用指针
