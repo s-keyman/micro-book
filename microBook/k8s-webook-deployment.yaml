@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook
+  labels:
+    app: webook
+spec:
+  #  副本数量
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webook
+  #  template 描述的是 Pod 中的内容
+  template:
+    metadata:
+      name: webook
+      labels:
+        app: webook
+    # 描述 Pod 中的具体信息
+    spec:
+      containers:
+        - name: webook
+          image: a1095001/webook:v0.0.1
+          ports:
+            - containerPort: 8080
+      

@@ -2,7 +2,7 @@ package main
 
 import (
 	"microBook/internal/web/middleware"
-	"microBook/pkg/ginx/middleware/ratelimit"
+	"net/http"
 	"strings"
 	"time"
 
@@ -10,7 +10,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -21,10 +20,16 @@ import (
 )
 
 func main() {
-	db := initDB()
-	server := initWebServer()
-	u := initUser(db)
-	u.RegisterRoutes(server)
+	//db := initDB()
+	//server := initWebServer()
+	//u := initUser(db)
+	//u.RegisterRoutes(server)
+	server := gin.Default()
+	server.GET(
+		"/hello", func(c *gin.Context) {
+			c.String(http.StatusOK, "hello world")
+		},
+	)
 	err := server.Run(":8080")
 	if err != nil {
 		panic("系统故障")
@@ -33,15 +38,15 @@ func main() {
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
-	redisClient := redis.NewClient(
-		&redis.Options{
-			Addr:     "localhost:6379",
-			Password: "", // no password set
-			DB:       0,  // use default DB
-		},
-	)
+	//redisClient := redis.NewClient(
+	//	&redis.Options{
+	//		Addr:     "localhost:6379",
+	//		Password: "", // no password set
+	//		DB:       0,  // use default DB
+	//	},
+	//)
 	// 基于滑动窗口算法的，利用redis进行IP限流
-	server.Use(ratelimit.NewBuilder(redisClient, time.Minute, 100).Build())
+	//server.Use(ratelimit.NewBuilder(redisClient, time.Minute, 100).Build())
 	server.Use(
 		cors.New(
 			cors.Config{
