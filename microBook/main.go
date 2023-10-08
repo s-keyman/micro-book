@@ -2,7 +2,6 @@ package main
 
 import (
 	"microBook/internal/web/middleware"
-	"net/http"
 	"strings"
 	"time"
 
@@ -20,16 +19,10 @@ import (
 )
 
 func main() {
-	//db := initDB()
-	//server := initWebServer()
-	//u := initUser(db)
-	//u.RegisterRoutes(server)
-	server := gin.Default()
-	server.GET(
-		"/hello", func(c *gin.Context) {
-			c.String(http.StatusOK, "hello world")
-		},
-	)
+	db := initDB()
+	server := initWebServer()
+	u := initUser(db)
+	u.RegisterRoutes(server)
 	err := server.Run(":8080")
 	if err != nil {
 		panic("系统故障")
